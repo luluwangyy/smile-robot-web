@@ -20,7 +20,7 @@ ROBOT_PORT = "COM6"  # Update with your serial port
 
 # Robot action sequences (define your movements here)
 ROBOT_SEQUENCES = {
-    'wave': 'wave.csv',
+    'wave': 'happy.csv',
     'nod': 'nod.csv', 
     'dance': 'dance.csv',
     'happy': 'happy.csv',
@@ -139,7 +139,7 @@ class RobotController:
                 
                 # Wait between frames (adjust for speed)
                 if i < len(frame_numbers) - 1:
-                    time.sleep(0.5)  # 500ms between frames
+                    time.sleep(0.05)  # 500ms between frames
             
             print(f"✅ Sequence '{name}' completed")
             
