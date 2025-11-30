@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>😊 Smile-Controlled Robot</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            color: white;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            animation: fadeIn 1s ease-in;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .main-container {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 900px;
+            width: 100%;
+            animation: slideUp 0.5s ease-out;
+        }
+
+        .video-container {
+            position: relative;
+            width: 100%;
+            max-width: 640px;
+            margin: 0 auto 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            background: #000;
+        }
+
+        #webcam, #output-canvas {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 15px;
+        }
+
+        #output-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            padding: 12px 30px;
+            font-size: 16px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status-panel {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .status-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            color: #333;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .status-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .status-card h3 {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .status-card .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .status-card.active {
+            background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
+            color: white;
+        }
+
+        .status-card.active h3,
+        .status-card.active .value {
+            color: white;
+        }
+
+        .smile-indicator {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            background: white;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+
+        .smile-indicator.smiling {
+            background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .settings-panel {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 20px;
+            border-radius: 15px;
+            margin-top: 20px;
+            color: #333;
+        }
+
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .setting-row label {
+            font-weight: 600;
+        }
+
+        .setting-row input[type="range"] {
+            width: 200px;
+        }
+
+        .setting-row input[type="number"] {
+            width: 80px;
+            padding: 5px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        .robot-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .action-btn {
+            padding: 15px;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .log-panel {
+            background: #2d3436;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            opacity: 0;
+            animation: fadeIn 0.3s ease-in forwards;
+        }
+
+        #connection-status {
+            padding: 10px 20px;
+            border-radius: 50px;
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+
+        .connected {
+            background: linear-gradient(135deg, #00b09b 0%, #96c93d 100%);
+            color: white;
+        }
+
+        .disconnected {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>😊 Smile-Controlled Robot</h1>
+        <p>Smile to make your robot move!</p>
+    </div>
+
+    <div class="main-container">
+        <div id="connection-status" class="disconnected">
+            🔌 Connecting to robot server...
+        </div>
+
+        <div class="video-container">
+            <video id="webcam" autoplay playsinline></video>
+            <canvas id="output-canvas"></canvas>
+            <div class="smile-indicator" id="smile-indicator">😐</div>
+        </div>
+
+        <div class="controls">
+            <button id="start-btn" class="btn btn-primary" onclick="startDetection()">
+                🎥 Start Camera
+            </button>
+            <button id="stop-btn" class="btn btn-danger" onclick="stopDetection()" disabled>
+                ⏹️ Stop Camera
+            </button>
+            <button id="connect-btn" class="btn btn-success" onclick="connectToRobot()">
+                🤖 Connect Robot
+            </button>
+        </div>
+
+        <div class="status-panel">
+            <div class="status-card" id="smile-status">
+                <h3>Smile Level</h3>
+                <div class="value" id="smile-level">0%</div>
+            </div>
+            <div class="status-card" id="detection-status">
+                <h3>Detection FPS</h3>
+                <div class="value" id="fps">0</div>
+            </div>
+            <div class="status-card" id="robot-status">
+                <h3>Robot Status</h3>
+                <div class="value" id="robot-state">Idle</div>
+            </div>
+            <div class="status-card" id="trigger-count">
+                <h3>Movements Triggered</h3>
+                <div class="value" id="trigger-value">0</div>
+            </div>
+        </div>
+
+        <div class="settings-panel">
+            <h3 style="margin-bottom: 15px;">⚙️ Settings</h3>
+            
+            <div class="setting-row">
+                <label>Smile Threshold:</label>
+                <div>
+                    <input type="range" id="smile-threshold" min="10" max="90" value="50">
+                    <input type="number" id="threshold-value" min="10" max="90" value="50">%
+                </div>
+            </div>
+            
+            <div class="setting-row">
+                <label>Trigger Delay (ms):</label>
+                <input type="number" id="trigger-delay" min="100" max="5000" value="1000">
+            </div>
+            
+            <div class="setting-row">
+                <label>Robot Action:</label>
+                <select id="robot-action" style="padding: 5px; border-radius: 5px; border: 1px solid #ddd;">
+                    <option value="wave">Wave</option>
+                    <option value="nod">Nod</option>
+                    <option value="dance">Dance</option>
+                    <option value="custom">Custom Sequence</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="robot-actions">
+            <button class="action-btn" onclick="testRobotAction('wave')">👋 Test Wave</button>
+            <button class="action-btn" onclick="testRobotAction('nod')">🙆 Test Nod</button>
+            <button class="action-btn" onclick="testRobotAction('dance')">💃 Test Dance</button>
+            <button class="action-btn" onclick="testRobotAction('stop')">🛑 Emergency Stop</button>
+        </div>
+
+        <div class="log-panel" id="log-panel">
+            <div class="log-entry">System ready. Click 'Start Camera' to begin...</div>
+        </div>
+    </div>
+
+    <!-- MediaPipe Face Mesh -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+
+    <script>
+        // Global variables
+        let camera = null;
+        let faceMesh = null;
+        let isDetecting = false;
+        let robotConnected = false;
+        let lastTriggerTime = 0;
+        let triggerCount = 0;
+        let ws = null;
+        let fpsCounter = 0;
+        let lastFpsUpdate = Date.now();
+
+        // Settings
+        let smileThreshold = 50;
+        let triggerDelay = 1000;
+
+        // WebSocket connection to robot server
+        function connectToRobot() {
+            addLog('Connecting to robot server...');
+            
+            ws = new WebSocket('ws://localhost:8765');
+            
+            ws.onopen = function() {
+                robotConnected = true;
+                document.getElementById('connection-status').className = 'connected';
+                document.getElementById('connection-status').innerHTML = '✅ Connected to Robot';
+                addLog('Successfully connected to robot server!');
+            };
+            
+            ws.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                addLog(`Robot: ${data.message}`);
+                if (data.status) {
+                    document.getElementById('robot-state').textContent = data.status;
+                }
+            };
+            
+            ws.onerror = function(error) {
+                addLog(`Connection error: ${error}`);
+                robotConnected = false;
+                document.getElementById('connection-status').className = 'disconnected';
+                document.getElementById('connection-status').innerHTML = '❌ Connection Failed';
+            };
+            
+            ws.onclose = function() {
+                robotConnected = false;
+                document.getElementById('connection-status').className = 'disconnected';
+                document.getElementById('connection-status').innerHTML = '🔌 Disconnected';
+                addLog('Disconnected from robot server');
+            };
+        }
+
+        // Initialize MediaPipe Face Mesh
+        function initializeFaceMesh() {
+            faceMesh = new FaceMesh({
+                locateFile: (file) => {
+                    return `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`;
+                }
+            });
+
+            faceMesh.setOptions({
+                maxNumFaces: 1,
+                refineLandmarks: true,
+                minDetectionConfidence: 0.5,
+                minTrackingConfidence: 0.5
+            });
+
+            faceMesh.onResults(onFaceResults);
+        }
+
+        // Calculate smile score based on face landmarks
+        function calculateSmileScore(landmarks) {
+            if (!landmarks || landmarks.length === 0) return 0;
+
+            // Key points for smile detection
+            // Mouth corners: 61 (left), 291 (right)
+            // Upper lip: 13
+            // Lower lip: 14
+            
+            const leftMouthCorner = landmarks[61];
+            const rightMouthCorner = landmarks[291];
+            const upperLip = landmarks[13];
+            const lowerLip = landmarks[14];
+            
+            // Calculate mouth width
+            const mouthWidth = Math.sqrt(
+                Math.pow(rightMouthCorner.x - leftMouthCorner.x, 2) +
+                Math.pow(rightMouthCorner.y - leftMouthCorner.y, 2)
+            );
+            
+            // Calculate mouth height
+            const mouthHeight = Math.sqrt(
+                Math.pow(upperLip.x - lowerLip.x, 2) +
+                Math.pow(upperLip.y - lowerLip.y, 2)
+            );
+            
+            // Calculate smile score based on mouth aspect ratio
+            // Wider mouth relative to height indicates smile
+            const aspectRatio = mouthWidth / (mouthHeight + 0.001);
+            
+            // Check if mouth corners are raised (smile characteristic)
+            const avgMouthCornerY = (leftMouthCorner.y + rightMouthCorner.y) / 2;
+            const lipCenterY = (upperLip.y + lowerLip.y) / 2;
+            const cornerLift = lipCenterY - avgMouthCornerY;
+            
+            // Combine metrics for final smile score
+            let smileScore = 0;
+            
+            // Aspect ratio component (0-50 points)
+            if (aspectRatio > 3.0) {
+                smileScore += Math.min(50, (aspectRatio - 3.0) * 25);
+            }
+            
+            // Corner lift component (0-50 points)
+            if (cornerLift > 0) {
+                smileScore += Math.min(50, cornerLift * 500);
+            }
+            
+            return Math.min(100, Math.max(0, smileScore));
+        }
+
+        // Process face detection results
+        function onFaceResults(results) {
+            const canvas = document.getElementById('output-canvas');
+            const ctx = canvas.getContext('2d');
+            const video = document.getElementById('webcam');
+            
+            // Set canvas size
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            
+            // Clear canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Update FPS
+            fpsCounter++;
+            const now = Date.now();
+            if (now - lastFpsUpdate > 1000) {
+                document.getElementById('fps').textContent = fpsCounter;
+                fpsCounter = 0;
+                lastFpsUpdate = now;
+            }
+            
+            if (results.multiFaceLandmarks && results.multiFaceLandmarks.length > 0) {
+                const landmarks = results.multiFaceLandmarks[0];
+                
+                // Draw face mesh
+                drawFaceMesh(ctx, landmarks);
+                
+                // Calculate smile score
+                const smileScore = calculateSmileScore(landmarks);
+                updateSmileUI(smileScore);
+                
+                // Trigger robot action if smiling
+                if (smileScore > smileThreshold && robotConnected) {
+                    triggerRobotAction(smileScore);
+                }
+            }
+        }
+
+        // Draw face mesh on canvas
+        function drawFaceMesh(ctx, landmarks) {
+            // Draw connections
+            ctx.strokeStyle = 'rgba(0, 255, 255, 0.5)';
+            ctx.lineWidth = 1;
+            
+            // Draw key smile points
+            const smilePoints = [61, 291, 13, 14]; // mouth corners and lips
+            ctx.fillStyle = 'rgba(255, 0, 255, 0.8)';
+            
+            for (const idx of smilePoints) {
+                const point = landmarks[idx];
+                const x = point.x * ctx.canvas.width;
+                const y = point.y * ctx.canvas.height;
+                
+                ctx.beginPath();
+                ctx.arc(x, y, 3, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+        }
+
+        // Update UI based on smile score
+        function updateSmileUI(smileScore) {
+            document.getElementById('smile-level').textContent = `${Math.round(smileScore)}%`;
+            
+            const indicator = document.getElementById('smile-indicator');
+            const statusCard = document.getElementById('smile-status');
+            
+            if (smileScore > smileThreshold) {
+                indicator.textContent = '😄';
+                indicator.classList.add('smiling');
+                statusCard.classList.add('active');
+            } else if (smileScore > 30) {
+                indicator.textContent = '🙂';
+                indicator.classList.remove('smiling');
+                statusCard.classList.remove('active');
+            } else {
+                indicator.textContent = '😐';
+                indicator.classList.remove('smiling');
+                statusCard.classList.remove('active');
+            }
+        }
+
+        // Trigger robot action
+        function triggerRobotAction(smileScore) {
+            const now = Date.now();
+            if (now - lastTriggerTime < triggerDelay) return;
+            
+            lastTriggerTime = now;
+            triggerCount++;
+            document.getElementById('trigger-value').textContent = triggerCount;
+            
+            const action = document.getElementById('robot-action').value;
+            
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    command: 'smile_detected',
+                    action: action,
+                    smile_score: smileScore,
+                    timestamp: now
+                }));
+                
+                addLog(`Smile detected! (${Math.round(smileScore)}%) - Triggering: ${action}`);
+                document.getElementById('robot-state').textContent = 'Moving';
+            }
+        }
+
+        // Test robot action manually
+        function testRobotAction(action) {
+            if (!robotConnected) {
+                addLog('Robot not connected!');
+                return;
+            }
+            
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    command: 'test_action',
+                    action: action,
+                    timestamp: Date.now()
+                }));
+                
+                addLog(`Testing action: ${action}`);
+            }
+        }
+
+        // Start camera and detection
+        async function startDetection() {
+            try {
+                const video = document.getElementById('webcam');
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { width: 640, height: 480 } 
+                });
+                video.srcObject = stream;
+                
+                if (!faceMesh) {
+                    initializeFaceMesh();
+                }
+                
+                camera = new Camera(video, {
+                    onFrame: async () => {
+                        if (isDetecting && faceMesh) {
+                            await faceMesh.send({ image: video });
+                        }
+                    },
+                    width: 640,
+                    height: 480
+                });
+                
+                camera.start();
+                isDetecting = true;
+                
+                document.getElementById('start-btn').disabled = true;
+                document.getElementById('stop-btn').disabled = false;
+                
+                addLog('Camera started. Smile detection active!');
+            } catch (error) {
+                console.error('Error starting camera:', error);
+                addLog(`Camera error: ${error.message}`);
+            }
+        }
+
+        // Stop camera and detection
+        function stopDetection() {
+            if (camera) {
+                camera.stop();
+                camera = null;
+            }
+            
+            isDetecting = false;
+            
+            const video = document.getElementById('webcam');
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+            }
+            
+            const canvas = document.getElementById('output-canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            document.getElementById('start-btn').disabled = false;
+            document.getElementById('stop-btn').disabled = true;
+            
+            addLog('Camera stopped.');
+        }
+
+        // Add log entry
+        function addLog(message) {
+            const logPanel = document.getElementById('log-panel');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            logPanel.appendChild(entry);
+            logPanel.scrollTop = logPanel.scrollHeight;
+            
+            // Limit log entries
+            if (logPanel.children.length > 50) {
+                logPanel.removeChild(logPanel.children[0]);
+            }
+        }
+
+        // Settings event listeners
+        document.getElementById('smile-threshold').addEventListener('input', function(e) {
+            smileThreshold = parseInt(e.target.value);
+            document.getElementById('threshold-value').value = smileThreshold;
+        });
+
+        document.getElementById('threshold-value').addEventListener('change', function(e) {
+            smileThreshold = parseInt(e.target.value);
+            document.getElementById('smile-threshold').value = smileThreshold;
+        });
+
+        document.getElementById('trigger-delay').addEventListener('change', function(e) {
+            triggerDelay = parseInt(e.target.value);
+        });
+
+        // Auto-connect to robot on page load
+        window.addEventListener('load', function() {
+            setTimeout(connectToRobot, 1000);
+        });
+    </script>
+</body>
+</html>
